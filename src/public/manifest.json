@@ -2,7 +2,7 @@
   "name": "StoryMap - Berbagi Cerita & Lokasi",
   "short_name": "StoryMap",
   "description": "Aplikasi berbagi cerita dengan fitur pemetaan interaktif.",
-  "start_url": "/index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6200ee",
@@ -41,7 +41,7 @@
       "name": "Tambah Cerita Baru",
       "short_name": "Tambah Story",
       "description": "Klik untuk menambah cerita baru ke StoryMap",
-      "url": "/#/add",
+      "url": "index.html#/add",
       "icons": [{ "src": "icon-192.svg", "sizes": "192x192" }]
     }
   ]

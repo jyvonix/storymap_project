@@ -63,9 +63,9 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Ada Cerita Baru!';
   const options = {
     body: data.message || 'Cek aplikasi untuk melihat cerita terbaru.',
-    icon: '/public/icon-192.svg',
-    badge: '/public/icon-192.svg',
-    data: { url: data.url || '/#/home' },
+    icon: 'icon-192.svg',
+    badge: 'icon-192.svg',
+    data: { url: data.url || '#/home' },
     actions: [{ action: 'view', title: 'Buka Cerita' }]
   };
   event.waitUntil(self.registration.showNotification(title, options));
