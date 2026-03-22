@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StoryMap - Aplikasi berbagi cerita dengan pemetaan digital interaktif">
+    <title>StoryMap SPA - Aksesibilitas Standar Tinggi</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="./public/manifest.json">
+    <meta name="theme-color" content="#6200ee">
+    <!-- Leaflet CSS diimpor di index.js -->
+</head>
+<body>
+
+    <!-- Target Advance: Skip to Content (Kriteria 4) -->
+    <a href="#mainContent" class="skip-link">Skip to content</a>
+
+    <header role="banner">
+        <div class="header-container">
+            <h1>StoryMap</h1>
+            <nav id="mainNav" role="navigation" aria-label="Navigasi Utama" style="display: none;">
+                <a href="#/home" class="nav-link">Home</a>
+                <a href="#/favorite" class="nav-link">Favorit</a>
+                <a href="#/add" class="nav-link">Tambah Story</a>
+                <button id="btnInstall" class="btn-logout" style="background: #10b981; margin-right: 10px; display: none;" aria-label="Instal Aplikasi">📲 Install</button>
+                <button id="pushToggle" class="btn-logout" style="background: #94a3b8; margin-right: 10px;" aria-label="Aktifkan atau matikan push notification">🔕 Notifikasi</button>
+                <button id="logoutBtn" class="btn-logout" aria-label="Keluar dari aplikasi">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Kontainer Utama dengan ID untuk Skip Link & Tabindex untuk Fokus -->
+    <main id="mainContent" tabindex="-1" role="main">
+        <!-- Konten akan dimuat secara dinamis oleh Router -->
+    </main>
+
+    <footer role="contentinfo">
+        <p>&copy; 2026 StoryMap Project - Submission Dicoding</p>
+    </footer>
+</body>
+</html>

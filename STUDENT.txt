@@ -1,0 +1,18 @@
+Nama Lengkap: [Siti Khodijah]
+ID Dicoding: [siti_khodijah_zIlx]
+Email: [sayangbudi120885@gmail.com]
+
+--- INFORMASI PENYELESAIAN TUGAS (REVISI SUBMISSION 2) ---
+Deployment URL: [MASUKKAN URL HASIL DEPLOY ANDA DI SINI]
+
+Detail Perbaikan Sesuai Feedback Reviewer:
+1. Kriteria 2 (Push Notification): Menggunakan VAPID Public Key resmi dari dokumentasi Story API (BCCs2eonMI...).
+2. Kriteria 3 (PWA & Offline): 
+   - Memperbaiki path ikon/screenshot di manifest.json (menghapus folder 'public/').
+   - Menambahkan fitur 'Add To Homescreen' (Tombol Install muncul otomatis saat kriteria PWA terpenuhi).
+3. Kriteria 4 (IndexedDB): 
+   - Menambahkan halaman khusus 'Favorit' (#/favorite) yang menampilkan data yang berhasil disimpan ke IndexedDB secara eksplisit.
+4. Kriteria 5 (Distribusi Publik): 
+   - Aplikasi telah dideploy secara publik (URL di atas).
+
+Terima kasih atas masukannya, semoga revisi ini memenuhi seluruh standar kelulusan.
