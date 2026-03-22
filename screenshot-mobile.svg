@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="#f0f2f5"/>
+  <rect width="1080" height="160" fill="#6200ee"/>
+  <text x="540" y="100" fill="#ffffff" font-family="Arial" font-size="48" text-anchor="middle">StoryMap - Home</text>
+  <rect x="100" y="300" width="880" height="400" rx="20" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
+  <rect x="100" y="750" width="880" height="400" rx="20" fill="#ffffff" stroke="#ddd" stroke-width="2"/>
+</svg>
