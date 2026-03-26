@@ -1,3 +1,5 @@
+import StoryApi from '../api/story-api';
+
 const PUSH_VAPID_PUBLIC_KEY = 'BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk';
 
 const urlB64ToUint8Array = (base64String) => {
@@ -19,13 +21,24 @@ const PushHelper = {
   },
 
   async subscribe() {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlB64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
-    });
-    console.log('Subscribed:', subscription);
-    return subscription;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
+      });
+
+      console.log('Browser subscription successful:', subscription);
+      
+      // Kirim data subscription ke server Dicoding (PENTING untuk Kriteria 2)
+      await StoryApi.subscribeToPushNotification(subscription);
+      console.log('Server subscription successful');
+
+      return subscription;
+    } catch (error) {
+      console.error('Failed to subscribe to push notification:', error);
+      throw error;
+    }
   },
 
   async unsubscribe() {
@@ -33,7 +46,9 @@ const PushHelper = {
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
       await subscription.unsubscribe();
-      console.log('Unsubscribed');
+      console.log('Unsubscribed from browser');
+      // Catatan: Story API biasanya tidak menyediakan endpoint unsubscribe khusus, 
+      // tapi kita sudah mencabut izin di sisi browser.
     }
   },
 };

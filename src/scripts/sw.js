@@ -59,30 +59,34 @@ registerRoute(
 
 // Push Notification
 self.addEventListener('push', (event) => {
-  let data;
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (error) {
-    data = {
-      title: 'Ada Cerita Baru!',
-      message: event.data ? event.data.text() : 'Cek aplikasi untuk melihat cerita terbaru.',
-    };
+  let data = {
+    title: 'Ada Cerita Baru!',
+    message: 'Cek aplikasi untuk melihat cerita terbaru.',
+    url: '/#/home',
+  };
+
+  if (event.data) {
+    try {
+      const jsonData = event.data.json();
+      data = { ...data, ...jsonData };
+    } catch (err) {
+      data.message = event.data.text();
+    }
   }
 
-  const title = data.title || 'Ada Cerita Baru!';
   const options = {
-    body: data.message || 'Cek aplikasi untuk melihat cerita terbaru.',
+    body: data.message,
     icon: 'icon-192.svg',
     badge: 'icon-192.svg',
-    data: { url: data.url || '#/home' },
+    data: { url: data.url },
     actions: [{ action: 'view', title: 'Buka Cerita' }]
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data.url;
+  const urlToOpen = new URL(event.notification.data.url, self.location.origin).href;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (let client of windowClients) {
@@ -106,10 +110,13 @@ async function syncStories() {
   const authData = await db.get('auth-token', 'token');
   const token = authData ? authData.value : null;
 
+  if (stories.length > 0 && !token) {
+    console.warn('Sync delayed: No authentication token found in IndexedDB.');
+    return;
+  }
+
   for (const story of stories) {
     try {
-      if (!token) throw new Error('No authentication token found');
-
       const formData = new FormData();
       formData.append('description', `${story.name}: ${story.description}`);
       const photoRes = await fetch(story.photo);
@@ -122,7 +129,15 @@ async function syncStories() {
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
-      if (response.ok) await db.delete('sync-queue', story.id);
-    } catch (err) { console.error('Sync failed:', err); }
+      if (response.ok) {
+        await db.delete('sync-queue', story.id);
+        console.log('Background Sync Success for story ID:', story.id);
+      } else {
+        const resJson = await response.json();
+        console.error('Background Sync Failed (Server):', resJson.message);
+      }
+    } catch (err) { 
+      console.error('Background Sync Failed (Network):', err); 
+    }
   }
 }

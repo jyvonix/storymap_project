@@ -76,6 +76,20 @@ const StoryApi = {
     if (!response.ok) throw new Error(responseJson.message);
     return responseJson;
   },
+
+  async subscribeToPushNotification(subscription) {
+    const response = await fetch(`${BASE_URL}/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this._getToken()}`,
+      },
+      body: JSON.stringify(subscription),
+    });
+    const responseJson = await response.json();
+    if (!response.ok) throw new Error(responseJson.message);
+    return responseJson;
+  },
 };
 
 export default StoryApi;

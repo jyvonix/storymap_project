@@ -43,7 +43,7 @@ export const HomeView = {
     return `
       <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 24px; border: 2px dashed #e2e8f0;">
          <div style="font-size: 4rem; margin-bottom: 20px;">🏝️</div>
-         <h4 style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">Tidak Ada Cerita Ditemukan</h4>
+         <h3 style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">Tidak Ada Cerita Ditemukan</h3>
          <p style="color: #64748b;">Coba gunakan kata kunci pencarian yang lain.</p>
       </div>
     `;
