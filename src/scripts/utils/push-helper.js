@@ -22,11 +22,20 @@ const PushHelper = {
 
   async subscribe() {
     try {
+      console.log('Starting push notification subscription process...');
       const registration = await navigator.serviceWorker.ready;
+      if (!registration) {
+        throw new Error('Service worker registration not found or not ready');
+      }
+
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlB64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
       });
+
+      if (!subscription) {
+        throw new Error('Failed to create push subscription in the browser');
+      }
 
       console.log('Browser subscription successful:', subscription);
       
@@ -37,7 +46,7 @@ const PushHelper = {
       return subscription;
     } catch (error) {
       console.error('Failed to subscribe to push notification:', error);
-      throw error;
+      throw new Error(`Gagal subscribe: ${error.message}`);
     }
   },
 

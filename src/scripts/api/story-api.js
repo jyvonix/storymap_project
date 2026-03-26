@@ -78,17 +78,22 @@ const StoryApi = {
   },
 
   async subscribeToPushNotification(subscription) {
-    const response = await fetch(`${BASE_URL}/notifications/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this._getToken()}`,
-      },
-      body: JSON.stringify(subscription),
-    });
-    const responseJson = await response.json();
-    if (!response.ok) throw new Error(responseJson.message);
-    return responseJson;
+    try {
+      const response = await fetch(`${BASE_URL}/notifications/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this._getToken()}`,
+        },
+        body: JSON.stringify(subscription.toJSON ? subscription.toJSON() : subscription),
+      });
+      const responseJson = await response.json();
+      if (!response.ok) throw new Error(responseJson.message || 'Gagal berlangganan push notification di server');
+      return responseJson;
+    } catch (error) {
+      console.error('Error in subscribeToPushNotification:', error);
+      throw error;
+    }
   },
 };
 

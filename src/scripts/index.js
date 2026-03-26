@@ -72,18 +72,25 @@ const app = {
     await updateStatus();
 
     pushToggle.onclick = async () => {
-      const isSubscribed = await PushHelper.isSubscribed();
-      if (isSubscribed) {
-        await PushHelper.unsubscribe();
-      } else {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          await PushHelper.subscribe();
+      try {
+        const isSubscribed = await PushHelper.isSubscribed();
+        if (isSubscribed) {
+          await PushHelper.unsubscribe();
+          Swal.fire('Berhasil', 'Notifikasi berhasil dinonaktifkan.', 'success');
         } else {
-          Swal.fire('Izin Notifikasi Ditolak', 'Silakan aktifkan notifikasi lewat setting browser Anda.', 'error');
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            await PushHelper.subscribe();
+            Swal.fire('Berhasil', 'Notifikasi berhasil diaktifkan!', 'success');
+          } else {
+            Swal.fire('Izin Notifikasi Ditolak', 'Silakan aktifkan notifikasi lewat setting browser Anda.', 'error');
+          }
         }
+        await updateStatus();
+      } catch (error) {
+        console.error('Push toggle error:', error);
+        Swal.fire('Gagal', `Terjadi kesalahan: ${error.message}`, 'error');
       }
-      await updateStatus();
     };
   },
 
