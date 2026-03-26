@@ -1,3 +1,5 @@
+import StoryIdb from '../db/story-idb';
+
 const BASE_URL = 'https://story-api.dicoding.dev/v1';
 
 const StoryApi = {
@@ -25,6 +27,7 @@ const StoryApi = {
     const responseJson = await response.json();
     if (response.ok) {
       localStorage.setItem('token', responseJson.loginResult.token);
+      await StoryIdb.setAuthToken(responseJson.loginResult.token);
       return responseJson;
     }
     throw new Error(responseJson.message);

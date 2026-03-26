@@ -6,11 +6,19 @@ import Router from './routes/router';
 import swRegister from './utils/sw-register';
 import PushHelper from './utils/push-helper';
 
+import StoryIdb from './db/story-idb';
+
 // Global Leaflet (Kriteria 2)
 window.L = L;
 
 const app = {
   async init() {
+    // Sync token from localStorage to StoryIdb if needed
+    const token = localStorage.getItem('token');
+    if (token) {
+      await StoryIdb.setAuthToken(token);
+    }
+
     // 1. Jalankan router segera agar halaman login tampil tanpa delay
     Router.route();
 
@@ -33,10 +41,11 @@ const app = {
           confirmButtonColor: '#6366f1',
           cancelButtonColor: '#ef4444',
           confirmButtonText: 'Ya, Keluar'
-        }).then((result) => {
+        }).then(async (result) => {
           if (result.isConfirmed) {
             sessionStorage.removeItem('isLoggedIn');
             localStorage.removeItem('token');
+            await StoryIdb.setAuthToken(null);
             window.location.hash = '#/login';
           }
         });

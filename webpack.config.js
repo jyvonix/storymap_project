@@ -50,6 +50,11 @@ module.exports = {
           to: path.resolve(__dirname, 'dist'),
           noErrorOnMissing: true,
         },
+        {
+          from: path.resolve(__dirname, '.gitignore'), // Gunakan file apa saja sebagai trigger
+          to: path.resolve(__dirname, 'dist/.nojekyll'),
+          transform() { return ''; }, // Isinya kosong saja
+        },
       ],
     }),
     new InjectManifest({

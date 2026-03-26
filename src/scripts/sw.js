@@ -59,7 +59,16 @@ registerRoute(
 
 // Push Notification
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+  let data;
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (error) {
+    data = {
+      title: 'Ada Cerita Baru!',
+      message: event.data ? event.data.text() : 'Cek aplikasi untuk melihat cerita terbaru.',
+    };
+  }
+
   const title = data.title || 'Ada Cerita Baru!';
   const options = {
     body: data.message || 'Cek aplikasi untuk melihat cerita terbaru.',
@@ -92,10 +101,15 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncStories() {
-  const db = await openDB('story-map-db', 1);
+  const db = await openDB('story-map-db', 2);
   const stories = await db.getAll('sync-queue');
+  const authData = await db.get('auth-token', 'token');
+  const token = authData ? authData.value : null;
+
   for (const story of stories) {
     try {
+      if (!token) throw new Error('No authentication token found');
+
       const formData = new FormData();
       formData.append('description', `${story.name}: ${story.description}`);
       const photoRes = await fetch(story.photo);
@@ -105,7 +119,7 @@ async function syncStories() {
 
       const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
       if (response.ok) await db.delete('sync-queue', story.id);
