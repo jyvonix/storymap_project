@@ -41,8 +41,6 @@ const StoryApi = {
     });
     const responseJson = await response.json();
     if (!response.ok) throw new Error(responseJson.message);
-    
-    // Kembalikan seluruh data dari server tanpa filter apapun (Kriteria 2)
     return responseJson.listStory;
   },
 
@@ -79,16 +77,23 @@ const StoryApi = {
 
   async subscribeToPushNotification(subscription) {
     try {
+      const subJson = subscription.toJSON();
+      const payload = {
+        endpoint: subscription.endpoint || subJson.endpoint,
+        keys: subJson.keys,
+      };
+
       const response = await fetch(`${BASE_URL}/notifications/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this._getToken()}`,
         },
-        body: JSON.stringify(subscription.toJSON ? subscription.toJSON() : subscription),
+        body: JSON.stringify(payload),
       });
+      
       const responseJson = await response.json();
-      if (!response.ok) throw new Error(responseJson.message || 'Gagal berlangganan push notification di server');
+      if (!response.ok) throw new Error(responseJson.message || 'Gagal subscribe');
       return responseJson;
     } catch (error) {
       console.error('Error in subscribeToPushNotification:', error);
@@ -96,16 +101,27 @@ const StoryApi = {
     }
   },
 
-  async unsubscribeFromPushNotification() {
+  async unsubscribeFromPushNotification(subscription) {
     try {
-      const response = await fetch(`${BASE_URL}/notifications/unsubscribe`, {
+      // PERBAIKAN RADIKAL: Kirim objek minimalis yang HANYA berisi endpoint.
+      // Kita pastikan tidak ada properti lain (termasuk keys) yang ikut terbawa.
+      const endpointOnly = {
+        endpoint: subscription.endpoint || subscription.toJSON().endpoint
+      };
+
+      console.log('Final attempt to unsubscribe with payload:', endpointOnly);
+
+      const response = await fetch(`${BASE_URL}/notifications/subscribe`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${this._getToken()}`,
         },
+        body: JSON.stringify(endpointOnly),
       });
+      
       const responseJson = await response.json();
-      if (!response.ok) throw new Error(responseJson.message || 'Gagal menghapus langganan push notification di server');
+      if (!response.ok) throw new Error(responseJson.message || 'Gagal unsubscribe');
       return responseJson;
     } catch (error) {
       console.error('Error in unsubscribeFromPushNotification:', error);

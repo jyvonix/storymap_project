@@ -15,19 +15,23 @@ const app = {
     const token = localStorage.getItem('token');
     if (token) await StoryIdb.setAuthToken(token);
 
-    // 2. Render Router
+    // 2. Render Router segera
     Router.route();
     window.addEventListener('hashchange', () => Router.route());
 
-    // 3. Pasang Event Click untuk Tombol Segera
-    this._initPushToggle();
-    this._initInstallBtn();
+    // 3. Pasang Listener Logout
     this._initLogout();
 
-    // 4. Daftarkan Service Worker saat load
+    // 4. Inisialisasi PWA (SW, Install, Push) saat load
     window.addEventListener('load', async () => {
-       await swRegister();
-       await this._updatePushStatus();
+       try {
+         await swRegister();
+         // Inisialisasi UI Push & Install setelah SW siap
+         this._initPushToggle();
+         this._initInstallBtn();
+       } catch (error) {
+         console.error('PWA init failed:', error);
+       }
     });
   },
 
@@ -39,7 +43,7 @@ const app = {
       pushToggle.innerText = isSubscribed ? '🔔 Notifikasi: On' : '🔕 Notifikasi: Off';
       pushToggle.style.background = isSubscribed ? '#10b981' : '#64748b';
     } catch (err) {
-      console.warn('Status update delay:', err.message);
+      console.warn('Failed to update push status:', err);
     }
   },
 
@@ -47,33 +51,28 @@ const app = {
     const pushToggle = document.getElementById('pushToggle');
     if (!pushToggle) return;
 
+    this._updatePushStatus();
+
     pushToggle.onclick = async () => {
       console.log('Push toggle clicked');
-      
-      if (!('serviceWorker' in navigator)) {
-        Swal.fire('Error', 'Browser Anda tidak mendukung Service Worker', 'error');
-        return;
-      }
-
       try {
         const isSubscribed = await PushHelper.isSubscribed();
         if (isSubscribed) {
           await PushHelper.unsubscribe();
-          Swal.fire('Berhasil', 'Notifikasi dimatikan', 'success');
+          Swal.fire('Berhasil', 'Notifikasi berhasil dinonaktifkan.', 'success');
         } else {
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             await PushHelper.subscribe();
-            Swal.fire('Berhasil', 'Notifikasi diaktifkan!', 'success');
+            Swal.fire('Berhasil', 'Notifikasi berhasil diaktifkan!', 'success');
           } else {
-            Swal.fire('Ditolak', 'Izin notifikasi ditolak', 'error');
+            Swal.fire('Ditolak', 'Silakan aktifkan izin notifikasi di browser Anda.', 'warning');
           }
         }
         await this._updatePushStatus();
       } catch (error) {
         console.error('Push Toggle Error:', error);
-        // Tampilkan pesan error yang lebih user-friendly
-        Swal.fire('Info', error.message || 'Gagal mengubah status notifikasi', 'info');
+        Swal.fire('Gagal', error.message, 'error');
       }
     };
   },
@@ -84,8 +83,11 @@ const app = {
       if (logoutBtn) {
         Swal.fire({
           title: 'Logout?',
+          text: "Anda akan keluar dari akun.",
           icon: 'warning',
           showCancelButton: true,
+          confirmButtonColor: '#6366f1',
+          cancelButtonColor: '#ef4444',
           confirmButtonText: 'Ya, Keluar'
         }).then(async (result) => {
           if (result.isConfirmed) {
@@ -101,11 +103,13 @@ const app = {
   _initInstallBtn() {
     let deferredPrompt;
     const btnInstall = document.getElementById('btnInstall');
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
       if (btnInstall) btnInstall.style.display = 'inline-block';
     });
+
     if (btnInstall) {
       btnInstall.onclick = async () => {
         if (deferredPrompt) {
@@ -115,6 +119,12 @@ const app = {
         }
       };
     }
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      if (btnInstall) btnInstall.style.display = 'none';
+      Swal.fire('Berhasil!', 'Aplikasi ditambahkan ke homescreen.', 'success');
+    });
   }
 };
 

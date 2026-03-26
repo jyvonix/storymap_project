@@ -14,58 +14,49 @@ const urlB64ToUint8Array = (base64String) => {
 };
 
 const PushHelper = {
-  async _getRegistration() {
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration) {
-      throw new Error('Service Worker belum terdaftar. Silakan muat ulang halaman.');
-    }
-    return registration;
-  },
-
   async isSubscribed() {
-    try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) return false;
-      const subscription = await registration.pushManager.getSubscription();
-      return !!subscription;
-    } catch (err) {
-      return false;
-    }
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
   },
 
   async subscribe() {
     try {
-      const registration = await this._getRegistration();
+      const registration = await navigator.serviceWorker.ready;
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlB64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
       });
 
-      console.log('Subscription success:', subscription);
+      console.log('PushHelper: Subscription success:', subscription);
       
       // Kirim ke server Dicoding
       await StoryApi.subscribeToPushNotification(subscription);
       return subscription;
     } catch (error) {
-      console.error('Subscribe Error:', error);
+      console.error('PushHelper: Subscribe Error:', error);
       throw new Error(`Gagal aktifkan notifikasi: ${error.message}`);
     }
   },
 
   async unsubscribe() {
     try {
-      const registration = await this._getRegistration();
+      const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
+        // PENTING: Beritahu server DULU sambil membawa data langganan yang akan dihapus
+        await StoryApi.unsubscribeFromPushNotification(subscription);
+        console.log('PushHelper: Server unsubscription success');
+
+        // BARU KEMUDIAN cabut izin di browser
         await subscription.unsubscribe();
-        // Hapus di server (DELETE method)
-        await StoryApi.unsubscribeFromPushNotification();
+        console.log('PushHelper: Browser unsubscription success');
       }
     } catch (error) {
-      console.error('Unsubscribe Error:', error);
-      throw new Error(`Gagal matikan notifikasi: ${error.message}`);
+      console.error('PushHelper: Unsubscribe Error:', error);
+      throw new Error(`Gagal mematikan notifikasi: ${error.message}`);
     }
   },
 };

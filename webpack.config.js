@@ -55,14 +55,8 @@ module.exports = {
     new InjectManifest({
       swSrc: './src/scripts/sw.js',
       swDest: 'sw.js',
-      // Gunakan exclude untuk mengecualikan file sistem/sampah (Workbox 7 compatible)
-      exclude: [
-        /\.nojekyll$/,
-        /\.gitignore$/,
-        /\.map$/,
-        /manifest\.json$/,
-        /^\..*/ // Mengabaikan semua file yang dimulai dengan titik (.)
-      ],
+      // Gunakan exclude untuk memfilter file yang tidak perlu di-precache
+      exclude: [/\.map$/, /manifest\.json$/, /\.nojekyll$/],
     }),
   ],
   devServer: {

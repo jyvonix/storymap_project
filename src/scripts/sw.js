@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-globals */
+/* Service Worker Version: 1.0.1 (Manual Refresh) */
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from 'workbox-strategies';
