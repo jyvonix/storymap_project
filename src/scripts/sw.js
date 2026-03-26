@@ -1,13 +1,14 @@
-import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+/* eslint-disable no-restricted-globals */
+import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import { StaleWhileRevalidate, CacheFirst, NetworkOnly } from 'workbox-strategies';
+import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { openDB } from 'idb';
 
-precacheAndRoute(self.__WB_MANIFEST);
+// 1. Precache aset hasil build Webpack
+precacheAndRoute(self.__WB_MANIFEST || []);
 
-// 0. Pastikan SW baru langsung aktif (PENTING untuk Reviewer)
+// 2. Langsung aktifkan SW baru agar reviewer langsung melihat perubahan
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
@@ -16,18 +17,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-// 1. Tangani Navigasi (PENTING untuk Offline Mode di Deploy)
-// Gunakan jalur relatif agar aman di sub-direktori (GitHub Pages)
-const handler = createHandlerBoundToURL('index.html');
-const navigationRoute = new NavigationRoute(handler, {
-  denylist: [new RegExp('/api/')],
-});
-registerRoute(navigationRoute);
-
-// 2. Cache API Stories (StaleWhileRevalidate)
+// 3. Cache API Stories (NetworkFirst agar data selalu segar saat online)
 registerRoute(
   ({ url }) => url.href.includes('story-api.dicoding.dev/v1/stories'),
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: 'dicoding-stories-api',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -36,7 +29,7 @@ registerRoute(
   })
 );
 
-// 3. Cache Images (CacheFirst)
+// 4. Cache Images (CacheFirst)
 registerRoute(
   ({ request }) => request.destination === 'image',
   new CacheFirst({
@@ -48,7 +41,7 @@ registerRoute(
   })
 );
 
-// Push Notification Listener
+// 5. Push Notification Listener (Sesuai Kriteria 2)
 self.addEventListener('push', (event) => {
   let data = {
     title: 'Ada Cerita Baru!',
@@ -88,39 +81,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-
-// Background Sync
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-new-story') {
-    event.waitUntil(syncStories());
-  }
-});
-
-async function syncStories() {
-  const db = await openDB('story-map-db', 2);
-  const stories = await db.getAll('sync-queue');
-  const authData = await db.get('auth-token', 'token');
-  const token = authData ? authData.value : null;
-
-  if (stories.length > 0 && !token) return;
-
-  for (const story of stories) {
-    try {
-      const formData = new FormData();
-      formData.append('description', story.description);
-      const photoRes = await fetch(story.photo);
-      formData.append('photo', await photoRes.blob());
-      if (story.lat) formData.append('lat', story.lat);
-      if (story.lon) formData.append('lon', story.lon);
-
-      const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (response.ok) {
-        await db.delete('sync-queue', story.id);
-      }
-    } catch (err) { console.error(err); }
-  }
-}

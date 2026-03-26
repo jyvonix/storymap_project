@@ -1,18 +1,16 @@
-import { Workbox } from 'workbox-window';
-
 const swRegister = async () => {
   if (!('serviceWorker' in navigator)) {
-    console.log('Service Worker not supported in this browser');
+    console.warn('Service Worker not supported');
     return;
   }
 
-  const wb = new Workbox('./sw.js');
-
   try {
-    await wb.register();
-    console.log('Service Worker registered successfully');
+    // Gunakan jalur 'sw.js' secara langsung (relatif terhadap index.html)
+    // Jangan pakai './sw.js' karena beberapa server (GitHub Pages) terkadang membingungkan
+    const registration = await navigator.serviceWorker.register('sw.js');
+    console.log('SW Registered successfully with scope:', registration.scope);
   } catch (error) {
-    console.error('Failed to register Service Worker:', error);
+    console.error('SW Registration Failed:', error);
   }
 };
 

@@ -14,57 +14,58 @@ const urlB64ToUint8Array = (base64String) => {
 };
 
 const PushHelper = {
+  async _getRegistration() {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) {
+      throw new Error('Service Worker belum terdaftar. Silakan muat ulang halaman.');
+    }
+    return registration;
+  },
+
   async isSubscribed() {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    return !!subscription;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) return false;
+      const subscription = await registration.pushManager.getSubscription();
+      return !!subscription;
+    } catch (err) {
+      return false;
+    }
   },
 
   async subscribe() {
     try {
-      console.log('Starting push notification subscription process...');
-      const registration = await navigator.serviceWorker.ready;
-      if (!registration) {
-        throw new Error('Service worker registration not found or not ready');
-      }
-
+      const registration = await this._getRegistration();
+      
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlB64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
       });
 
-      if (!subscription) {
-        throw new Error('Failed to create push subscription in the browser');
-      }
-
-      console.log('Browser subscription successful:', subscription);
+      console.log('Subscription success:', subscription);
       
-      // Kirim data subscription ke server Dicoding (PENTING untuk Kriteria 2)
+      // Kirim ke server Dicoding
       await StoryApi.subscribeToPushNotification(subscription);
-      console.log('Server subscription successful');
-
       return subscription;
     } catch (error) {
-      console.error('Failed to subscribe to push notification:', error);
-      throw new Error(`Gagal subscribe: ${error.message}`);
+      console.error('Subscribe Error:', error);
+      throw new Error(`Gagal aktifkan notifikasi: ${error.message}`);
     }
   },
 
   async unsubscribe() {
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await this._getRegistration();
       const subscription = await registration.pushManager.getSubscription();
+      
       if (subscription) {
         await subscription.unsubscribe();
-        console.log('Unsubscribed from browser');
-        
-        // PENTING: Hapus langganan di server menggunakan method DELETE
+        // Hapus di server (DELETE method)
         await StoryApi.unsubscribeFromPushNotification();
-        console.log('Unsubscribed from server successfully');
       }
     } catch (error) {
-      console.error('Failed to unsubscribe:', error);
-      throw new Error(`Gagal unsubscribe: ${error.message}`);
+      console.error('Unsubscribe Error:', error);
+      throw new Error(`Gagal matikan notifikasi: ${error.message}`);
     }
   },
 };

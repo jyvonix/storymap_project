@@ -8,9 +8,9 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
+    publicPath: '/storymap_project/',
     clean: true,
   },
-  // Menghilangkan peringatan "Asset size limit" agar terminal bersih
   performance: {
     hints: false,
     maxEntrypointSize: 512000,
@@ -50,16 +50,19 @@ module.exports = {
           to: path.resolve(__dirname, 'dist'),
           noErrorOnMissing: true,
         },
-        {
-          from: path.resolve(__dirname, '.gitignore'), // Gunakan file apa saja sebagai trigger
-          to: path.resolve(__dirname, 'dist/.nojekyll'),
-          transform() { return ''; }, // Isinya kosong saja
-        },
       ],
     }),
     new InjectManifest({
       swSrc: './src/scripts/sw.js',
       swDest: 'sw.js',
+      // Gunakan exclude untuk mengecualikan file sistem/sampah (Workbox 7 compatible)
+      exclude: [
+        /\.nojekyll$/,
+        /\.gitignore$/,
+        /\.map$/,
+        /manifest\.json$/,
+        /^\..*/ // Mengabaikan semua file yang dimulai dengan titik (.)
+      ],
     }),
   ],
   devServer: {
