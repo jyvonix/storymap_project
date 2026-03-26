@@ -51,13 +51,20 @@ const PushHelper = {
   },
 
   async unsubscribe() {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      await subscription.unsubscribe();
-      console.log('Unsubscribed from browser');
-      // Catatan: Story API biasanya tidak menyediakan endpoint unsubscribe khusus, 
-      // tapi kita sudah mencabut izin di sisi browser.
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        console.log('Unsubscribed from browser');
+        
+        // PENTING: Hapus langganan di server menggunakan method DELETE
+        await StoryApi.unsubscribeFromPushNotification();
+        console.log('Unsubscribed from server successfully');
+      }
+    } catch (error) {
+      console.error('Failed to unsubscribe:', error);
+      throw new Error(`Gagal unsubscribe: ${error.message}`);
     }
   },
 };

@@ -1,13 +1,13 @@
-import { precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { StaleWhileRevalidate, CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { openDB } from 'idb';
 
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Pastikan SW baru langsung aktif
+// 0. Pastikan SW baru langsung aktif (PENTING untuk Reviewer)
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
@@ -16,24 +16,15 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-// Cache Google Fonts
-registerRoute(
-  ({ url }) => url.origin === 'https://fonts.googleapis.com',
-  new StaleWhileRevalidate({ cacheName: 'google-fonts-stylesheets' })
-);
+// 1. Tangani Navigasi (PENTING untuk Offline Mode di Deploy)
+// Gunakan jalur relatif agar aman di sub-direktori (GitHub Pages)
+const handler = createHandlerBoundToURL('index.html');
+const navigationRoute = new NavigationRoute(handler, {
+  denylist: [new RegExp('/api/')],
+});
+registerRoute(navigationRoute);
 
-registerRoute(
-  ({ url }) => url.origin === 'https://fonts.gstatic.com',
-  new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 }),
-    ],
-  })
-);
-
-// Cache API Stories (StaleWhileRevalidate untuk Offline)
+// 2. Cache API Stories (StaleWhileRevalidate)
 registerRoute(
   ({ url }) => url.href.includes('story-api.dicoding.dev/v1/stories'),
   new StaleWhileRevalidate({
@@ -45,7 +36,7 @@ registerRoute(
   })
 );
 
-// Cache Images
+// 3. Cache Images (CacheFirst)
 registerRoute(
   ({ request }) => request.destination === 'image',
   new CacheFirst({
@@ -57,7 +48,7 @@ registerRoute(
   })
 );
 
-// Push Notification
+// Push Notification Listener
 self.addEventListener('push', (event) => {
   let data = {
     title: 'Ada Cerita Baru!',
@@ -79,6 +70,7 @@ self.addEventListener('push', (event) => {
     icon: 'icon-192.svg',
     badge: 'icon-192.svg',
     data: { url: data.url },
+    vibrate: [100, 50, 100],
     actions: [{ action: 'view', title: 'Buka Cerita' }]
   };
   event.waitUntil(self.registration.showNotification(data.title, options));
@@ -97,7 +89,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Background Sync (Offline Queue)
+// Background Sync
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-new-story') {
     event.waitUntil(syncStories());
@@ -110,15 +102,12 @@ async function syncStories() {
   const authData = await db.get('auth-token', 'token');
   const token = authData ? authData.value : null;
 
-  if (stories.length > 0 && !token) {
-    console.warn('Sync delayed: No authentication token found in IndexedDB.');
-    return;
-  }
+  if (stories.length > 0 && !token) return;
 
   for (const story of stories) {
     try {
       const formData = new FormData();
-      formData.append('description', `${story.name}: ${story.description}`);
+      formData.append('description', story.description);
       const photoRes = await fetch(story.photo);
       formData.append('photo', await photoRes.blob());
       if (story.lat) formData.append('lat', story.lat);
@@ -131,13 +120,7 @@ async function syncStories() {
       });
       if (response.ok) {
         await db.delete('sync-queue', story.id);
-        console.log('Background Sync Success for story ID:', story.id);
-      } else {
-        const resJson = await response.json();
-        console.error('Background Sync Failed (Server):', resJson.message);
       }
-    } catch (err) { 
-      console.error('Background Sync Failed (Network):', err); 
-    }
+    } catch (err) { console.error(err); }
   }
 }

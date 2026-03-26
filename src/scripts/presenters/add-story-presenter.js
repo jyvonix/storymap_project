@@ -218,6 +218,16 @@ const AddStoryPresenter = {
           lat: this._selectedLocation?.lat,
           lon: this._selectedLocation?.lon
         });
+
+        // Picu notifikasi lokal setelah berhasil unggah (Kriteria 2)
+        if (Notification.permission === 'granted') {
+          const registration = await navigator.serviceWorker.ready;
+          registration.showNotification('Cerita Berhasil Diunggah!', {
+            body: 'Terima kasih telah berbagi cerita terbaru Anda.',
+            icon: 'icon-192.svg',
+            badge: 'icon-192.svg',
+          });
+        }
         
         Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Cerita Anda telah dipublikasikan.', timer: 2000, showConfirmButton: false })
           .then(() => {

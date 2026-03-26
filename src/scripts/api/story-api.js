@@ -95,6 +95,23 @@ const StoryApi = {
       throw error;
     }
   },
+
+  async unsubscribeFromPushNotification() {
+    try {
+      const response = await fetch(`${BASE_URL}/notifications/unsubscribe`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${this._getToken()}`,
+        },
+      });
+      const responseJson = await response.json();
+      if (!response.ok) throw new Error(responseJson.message || 'Gagal menghapus langganan push notification di server');
+      return responseJson;
+    } catch (error) {
+      console.error('Error in unsubscribeFromPushNotification:', error);
+      throw error;
+    }
+  },
 };
 
 export default StoryApi;
